@@ -1,10 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
 books = []
 page_number = 1
 
-while True:
+for i in range(3):
     url = f"https://books.toscrape.com/catalogue/page-{page_number}.html"
     headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -23,11 +24,14 @@ while True:
         for book in soup.select("article.product_pod"):
             title = book.h3.a["title"]
             price = book.select_one(".price_color").get_text(strip=True)
-            books.append({"title": title, "price": price})
-
+            price = float(price.replace("Â£", ""))
+            if price < 20:
+                books.append({"title": title, "price": price})
         page_number += 1
 
     else:
         break
 
-print(books)
+books_df = pd.DataFrame(books)
+print(books_df.shape)
+print(books_df)
