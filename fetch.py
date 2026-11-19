@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import time
 
 BASE_URL = f"https://books.toscrape.com/"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -44,6 +45,7 @@ if __name__ == "__main__":
         if html_string:
             parse_content(html_string, full_url)
             page_number += 1
+            time.sleep(1)
         else:
             continue
 
