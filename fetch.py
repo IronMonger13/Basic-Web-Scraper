@@ -2,36 +2,51 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-books = []
-page_number = 1
+BASE_URL = f"https://books.toscrape.com/"
+HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-for i in range(3):
-    url = f"https://books.toscrape.com/catalogue/page-{page_number}.html"
-    headers = {"User-Agent": "Mozilla/5.0"}
 
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        html_string = response.text
-        soup = BeautifulSoup(html_string, "lxml")
+def fetch(url):
+    try:
+        response = requests.get(url, headers=HEADERS)
+        if response.status_code == 200:
+            return response.text
+        return None
+    except:
+        return None
 
-        # print(soup.title.text)
-        # print(soup.find("h1").text)
-        # print(soup.find_all("h1"))
-        # print(soup.find_all("a")[:5])
-        # # print(soup.find("div", class_="container-fluid page"))
-        # print(soup.select("article.product"))
 
-        for book in soup.select("article.product_pod"):
-            title = book.h3.a["title"]
-            price = book.select_one(".price_color").get_text(strip=True)
-            price = float(price.replace("Â£", ""))
-            if price < 20:
-                books.append({"title": title, "price": price})
-        page_number += 1
+def parse_content(html, url):
+    soup = BeautifulSoup(html, "lxml")
 
-    else:
-        break
+    for book in soup.select("article.product_pod"):
+        title = book.h3.a["title"]
+        price = book.select_one(".price_color").get_text(strip=True)
+        price = float(price.replace("Â£", ""))
+        availability = book.select_one(".instock.availability").get_text(strip=True)
+        image_src = requests.compat.urljoin(url, book.select_one("img")["src"])
+        content.append(
+            {
+                "title": title,
+                "price": price,
+                "availability": availability,
+                "image_src": image_src,
+            }
+        )
 
-books_df = pd.DataFrame(books)
-print(books_df.shape)
-print(books_df)
+
+if __name__ == "__main__":
+    content = []
+    page_number = 1
+    for i in range(3):
+        full_url = BASE_URL + f"catalogue/page-{page_number}.html"
+        html_string = fetch(full_url)
+        if html_string:
+            parse_content(html_string, full_url)
+            page_number += 1
+        else:
+            continue
+
+    df = pd.DataFrame(content)
+    print(df.shape)
+    print(df)
